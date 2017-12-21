@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.soumyadeb.cleanme2.ResponseActivity">
+
+
+    <include layout="@layout/toolbar" android:id="@+id/toolbar"/>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:text="We have recorded your response.\nThank you for your valuable time."
+        android:layout_above="@+id/btn_home"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="199dp" />
+
+    <Button
+        android:id="@+id/btn_home"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:text="GO TO HOME"
+        android:textColor="@android:color/white"
+        android:background="@color/colorPrimary"
+        android:layout_alignParentEnd="true" />
+</RelativeLayout>
