@@ -64,6 +64,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Data members:
     private String dustbinId;
     private final int CAMERA_REQ = 1000;
+    private final double VISHAKHAPATNAM_LAT = 17.6868;
+    private final double VISHAKHAPATNAM_LONG = 83.2185;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +89,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         dustbinList = new ArrayList<>();
         mRootRef = FirebaseDatabase.getInstance().getReference();
-        mDatabase = mRootRef.child("dustbins").child("BMC");
+        mDatabase = mRootRef.child("dustbins").child("GVMC");
 
         // Retrieve list of dustbins stored in the database:
         mDatabase.addChildEventListener(new ChildEventListener() {
@@ -170,7 +172,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.setPadding(0,150,0,0);
 
-        LatLng latLng = new LatLng(20.2961, 85.8245);
+        LatLng latLng = new LatLng(VISHAKHAPATNAM_LAT, VISHAKHAPATNAM_LONG);
         mMap.addMarker(new MarkerOptions().position(latLng).title("Current location"));
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 11);
         mMap.animateCamera(cameraUpdate);
@@ -246,7 +248,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     // Check of dustbin ID is present in the database:
                     if(dataSnapshot.hasChild(dustbinId)){
-                        StorageReference mStoreImage = mStorageRef.child("images/municipality/BMC/"+Tools.random()+".jpg");
+                        StorageReference mStoreImage = mStorageRef.child("images/municipality/GVMC/"+Tools.random()+".jpg");
 
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
@@ -264,7 +266,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
                                 Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                                DatabaseReference mFullDustbinsRef = mRootRef.child("full_dustbins/BMC");
+                                DatabaseReference mFullDustbinsRef = mRootRef.child("full_dustbins/GVMC");
                                 Map<String, String> fullDustbinMap = new HashMap();
                                 fullDustbinMap.put("image", downloadUrl.toString());
                                 Calendar calendar = Calendar.getInstance();
