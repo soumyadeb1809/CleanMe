@@ -211,8 +211,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
             if (result != null) {
                 if (result.getContents() != null) {
-                    Toast.makeText(this, "Scan result: " + result.getContents(), Toast.LENGTH_LONG).show();
-                    dustbinId = result.getContents();
+                    Toast.makeText(this, "Scan result: " + Tools.idModifier(result.getContents()), Toast.LENGTH_LONG).show();
+                    dustbinId = Tools.idModifier(result.getContents());
 
                     if(TextUtils.isEmpty(dustbinId)){
                         Toast.makeText(this, "Invalid dustbin ID", Toast.LENGTH_LONG).show();

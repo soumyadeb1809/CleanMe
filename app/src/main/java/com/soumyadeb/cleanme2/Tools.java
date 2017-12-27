@@ -36,4 +36,10 @@ public class Tools {
         return sb.toString();
     }
 
+    public static String idModifier(String input){
+        input = input.replaceAll("/", "-");
+
+        return input;
+    }
+
 }
