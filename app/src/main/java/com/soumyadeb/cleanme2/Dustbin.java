@@ -5,9 +5,9 @@ package com.soumyadeb.cleanme2;
  */
 
 public class Dustbin {
-    private String id, latitude, longitude, city, locality, last_clean, status, municipality;
+    private String id, latitude, longitude, city, locality, last_clean, status, municipality, zone;
 
-    public Dustbin(String id, String latitude, String longitude, String city, String locality, String last_clean, String status, String municipality) {
+    public Dustbin(String id, String latitude, String longitude, String city, String locality, String last_clean, String status, String municipality, String zone) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -16,8 +16,12 @@ public class Dustbin {
         this.last_clean = last_clean;
         this.status = status;
         this.municipality = municipality;
+        this.zone = zone;
     }
 
+    public String getZone() {
+        return zone;
+    }
 
     public String getId() {
         return id;

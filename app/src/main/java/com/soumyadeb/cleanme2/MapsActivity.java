@@ -39,8 +39,10 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +65,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Data members:
     private String dustbinId;
+    private String zone;
     private final int CAMERA_REQ = 1000;
     private final double VISHAKHAPATNAM_LAT = 17.6868;
     private final double VISHAKHAPATNAM_LONG = 83.2185;
@@ -86,6 +89,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         mProgress = new ProgressDialog(this);
+        mProgress.setCancelable(false);
 
         dustbinList = new ArrayList<>();
         mRootRef = FirebaseDatabase.getInstance().getReference();
@@ -103,8 +107,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 String last_clean = dataSnapshot.child("last_clean").getValue().toString();
                 String status = dataSnapshot.child("status").getValue().toString();
                 String municipality = dataSnapshot.child("municipality").getValue().toString();
+                String zone = dataSnapshot.child("zone").getValue().toString();
 
-                Dustbin dustbin = new Dustbin(id, latitude, longitude, city, locality, last_clean, status, municipality);
+                Dustbin dustbin = new Dustbin(id, latitude, longitude, city, locality, last_clean, status, municipality, zone);
                 dustbinList.add(dustbin);
                 int MARKER_RESOURCE=R.drawable.ic_marker_dustbin_clean;
                 if(status.equals("clean")){
@@ -153,6 +158,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        String milis = String.valueOf(calendar.getTimeInMillis());
+
+        SimpleDateFormat formatter = new SimpleDateFormat("DD-MM-YYYY, hh:mm:ss");
+        Calendar calendar1 = Calendar.getInstance();
+        calendar.setTimeInMillis(Long.parseLong(milis));
+
+        Log.i("asdf", "MILIS: "+milis);
+        Log.i("asdf", "DATE: "+formatter.format(calendar1.getTime()));
+
 
     }
 
@@ -173,8 +189,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setPadding(0,150,0,0);
 
         LatLng latLng = new LatLng(VISHAKHAPATNAM_LAT, VISHAKHAPATNAM_LONG);
-        mMap.addMarker(new MarkerOptions().position(latLng).title("Current location"));
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 11);
+        //mMap.addMarker(new MarkerOptions().position(latLng).title("Current location"));
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 10);
         mMap.animateCamera(cameraUpdate);
 
     }
@@ -252,7 +268,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                        byte[] data = baos.toByteArray();
+                        final byte[] data = baos.toByteArray();
 
                         UploadTask uploadTask = mStoreImage.putBytes(data);
                         uploadTask.addOnFailureListener(new OnFailureListener() {
@@ -266,30 +282,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
                                 Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                                DatabaseReference mFullDustbinsRef = mRootRef.child("full_dustbins/GVMC");
-                                Map<String, String> fullDustbinMap = new HashMap();
+                                final DatabaseReference mFullDustbinsRef = mRootRef.child("full_dustbins/GVMC");
+                                final Map<String, String> fullDustbinMap = new HashMap();
                                 fullDustbinMap.put("image", downloadUrl.toString());
                                 Calendar calendar = Calendar.getInstance();
+
                                 fullDustbinMap.put("timestamp", String.valueOf(calendar.getTimeInMillis()));
                                 fullDustbinMap.put("dustbin_id",dustbinId);
 
-                                // Update dustbin database:
-                                mFullDustbinsRef.child(dustbinId).setValue(fullDustbinMap).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                mDatabase.child(dustbinId).addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
-                                    public void onSuccess(Void aVoid) {
-                                        // Change status of the dustbin to 'full':
-                                        mDatabase.child(dustbinId).child("status").setValue("full");
-                                        mProgress.dismiss();
-                                        startActivity(new Intent(MapsActivity.this, ResponseActivity.class));
-                                        finish();
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        zone = dataSnapshot.child("zone").getValue().toString();
+                                        fullDustbinMap.put("zone", zone);
+                                        DatabaseReference mZoneRef = mRootRef.child("municipalities").child("GVMC").child("zones");
+                                        mZoneRef.child(zone).addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                                                fullDustbinMap.put("zone_name", dataSnapshot.child("name").getValue().toString());
+
+                                                // Update dustbin database:
+                                                mFullDustbinsRef.child(dustbinId).setValue(fullDustbinMap).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void aVoid) {
+                                                        // Change status of the dustbin to 'full':
+                                                        mDatabase.child(dustbinId).child("status").setValue("full");
+                                                        mProgress.dismiss();
+                                                        startActivity(new Intent(MapsActivity.this, ResponseActivity.class));
+                                                        finish();
+                                                    }
+                                                }).addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        mProgress.dismiss();
+                                                        Toast.makeText(MapsActivity.this, "Upload failed. Please try again.", Toast.LENGTH_LONG).show();
+                                                    }
+                                                });
+                                            }
+
+                                            @Override
+                                            public void onCancelled(DatabaseError databaseError) {
+
+                                            }
+                                        });
+
+
+
                                     }
-                                }).addOnFailureListener(new OnFailureListener() {
+
                                     @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        mProgress.dismiss();
-                                        Toast.makeText(MapsActivity.this, "Upload failed. Please try again.", Toast.LENGTH_LONG).show();
+                                    public void onCancelled(DatabaseError databaseError) {
+                                        //Do nothing.
                                     }
                                 });
+
 
                             }
                         });
@@ -304,7 +351,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-
+                    //Do nothing
                 }
             });
 
