@@ -30,4 +30,14 @@
         app:rippleColor="@android:color/white"
         />
 
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="10sp"
+        android:layout_gravity="bottom|center"
+        android:layout_marginBottom="16dp"
+        android:text="Developed by github.com/soumyadeb1809"
+        />
+
 </android.support.design.widget.CoordinatorLayout>
